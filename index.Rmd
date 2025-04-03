@@ -1,0 +1,306 @@
+---
+title: "index"
+author: "Kai Holl"
+date: "2025-04-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(igraph)
+```
+
+1.  Use the files you created during the preHomework in a GitHub Repo. Use the Fifa graph, projecting only the countries (netwrom of countries), and report: Use the Girvan-Newman and Leiden algorithm, and present a plot of both results. Which one should be chosen? JUST PREPARE ONE CODE FILE, and publish it as website (as usual) using GitHub. Send the link to the REPOSITORY, and in the README add the link.
+
+# Question 1
+
+## Use the Peruvian graph, and prepare a code in R to answer:
+
+### Use the Louvain and Leiden algorithm, and present a plot of both results.
+
+```{r}
+rm(list = ls()) # clear memory
+
+#This is the link to the peru network graph from my GitHub repo:
+peru_link = "https://github.com/DACSS690C/networks/raw/refs/heads/main/MyGraphs/peru.graphml"
+```
+
+```{r}
+# get network
+peru = read_graph(peru_link, format='graphml')
+
+#making sure to have the name labels
+V(peru)$name=V(peru)$id 
+```
+
+```{r}
+# let's draw the network
+set.seed(111) # use this to get same results as me
+
+plot.igraph(peru)
+```
+
+### The Louvain algorithm
+
+<!-- The Louvain method is **agglomerative**, meaning it starts from the nodes and creates small communities from the bottom up. -->
+
+<!-- It is based on the idea of optimizing a measure called **modularity**. Modularity quantifies the *quality* of a community structure by comparing the number of edges within communities to the *expected* number of edges if the network were randomly connected. It measures the strength of the division of a network into clusters. -->
+
+<!-- The algorithm aims to maximize the modularity score, indicating a strong community structure. -->
+
+```{r}
+# set seed
+set.seed(321)
+
+peru_lv <- cluster_louvain(peru)
+sizes(peru_lv) # returns the community sizes, in the order of their ids
+```
+
+```{r}
+# plot the louvain algorithm
+plot(peru_lv, peru,
+     layout = layout_with_kk, # plot with the Kamada-Kawai layout algorithm
+     # place the vertices on the plane, or in the 3d space, based on a phyisical model of springs.
+     main="Louvain Solution")
+```
+
+Let's see the modularity score:
+
+```{r}
+modularity(peru, membership(peru_lv), directed = FALSE)
+```
+
+### The Leiden algorithm
+
+<!-- The Leiden method is agglomerative as well, but it allows the finding of small communities. -->
+
+<!-- This method identifies groups of nodes that are more densely connected to each other than to the rest of the network.  -->
+
+<!-- This algorithm also optimizes modularity to ensure that the identified communities are well-defined and meaningful.  -->
+
+```{r}
+# compute the communities using the objective function
+set.seed(123) # set seed
+peru_ld <- cluster_leiden(peru,
+                              objective_function ="modularity")
+
+sizes(peru_ld)
+```
+
+```{r}
+# plot the leiden algorithm
+plot(peru_ld, peru,
+     layout = layout_with_kk, # plot with the Kamada-Kawai layout algorithm
+     main="Leiden Solution-using modularity")
+```
+
+Let's see the modularity score:
+
+```{r}
+modularity(peru, membership(peru_ld))
+```
+
+### Which one should be chosen?
+
+The modularity score are the same for both methods. Thus, the strength of the community structures for both networks is the same for the Leiden method and Louvain method. You can choose either method.
+
+
+
+# Question 2
+
+## Use the Seattle graph, and prepare a code in R to answer:
+
+### Use the Louvain and Leiden algorithm. Did any of them work? 
+
+```{r}
+#This is the link to the seattle network graph from my GitHub repo:
+seattle_link = "https://github.com/DACSS690C/networks/raw/refs/heads/main/MyGraphs/seattle.graphml"
+```
+
+```{r}
+# get network
+seattle = read_graph(seattle_link, format='graphml')
+
+#making sure to have the name labels
+V(seattle)$name=V(seattle)$id 
+```
+
+```{r}
+# let's draw the network
+set.seed(111) # use this to get same results as me
+
+plot.igraph(seattle)
+```
+
+### The Louvain algorithm
+
+
+```{r}
+# CODE COMMENTED OUT SO CODE COULD BE KNIT INTO HTML
+# # set seed
+# set.seed(321)
+# 
+# seattle_lv <- cluster_louvain(seattle)
+# sizes(seattle_lv) # returns the community sizes, in the order of their ids
+```
+
+The Louvain method only works for undirected graphs, and the Seattle graph is directed as it represents an asymmetric relationship. 
+
+### The Leiden algorithm
+
+```{r}
+# CODE COMMENTED OUT SO CODE COULD BE KNIT INTO HTML
+# compute the communities using the objective function
+# set.seed(123) # set seed
+# seattle_ld <- cluster_leiden(seattle,
+#                               objective_function ="modularity")
+# 
+# sizes(seattle_ld)
+```
+
+The Leiden method also did not work, as it is also only for use with undirected graphs.
+
+### If they did not work, choose two other algorithms, and plot the result.
+
+<!-- Most algorithms to find communities do not take into account directionality (they return communities, but disregard edges direction), or can not process a directed graph (they give an error if the graph is directed). -->
+
+### Girvan-Newmann algorithm
+
+```{r}
+set.seed(333)
+
+seattle_gn <- cluster_edge_betweenness(seattle, directed = TRUE)
+sizes(seattle_gn)
+```
+
+```{r}
+# plot GM algorithm
+plot(seattle_gn, seattle,
+     layout = layout_with_kk, 
+     main="Girvan-Newman Solution")
+```
+
+Modularity score:
+
+```{r}
+modularity(seattle, membership(seattle_gn), directed = TRUE)
+```
+
+### Infomap
+
+<!-- This algorithm emerges from walks in the graph. If a person walks the graph, and remains in a section of the graph while visiting the nodes, it is a possible community. -->
+
+```{r}
+set.seed(333)
+
+seattle_im <- cluster_infomap(seattle)
+sizes(seattle_im)
+```
+
+```{r}
+# plot
+set.seed(332)
+
+plot(seattle_im, seattle,
+     # vertex.label=V(seattle)$name,
+     layout = layout_nicely, vertex.label.cex=0.5,
+     main="Infomap solution")
+```
+Modularity score:
+
+```{r}
+modularity(seattle, membership(seattle_im))
+```
+
+```{r}
+sizes(cluster_label_prop(seattle, mode = 'out'))
+```
+
+
+### Which one should be chosen from the two algorithms you chose?
+
+The modularity score for the infomap algorithm is 0, indicating that the the connections in the community are no better than random assignment. On the other hand, the modularity score for the Girvan-Newmann algorithm is 0.003039821, which, although still very low, is better than 0. Thus, **the Girvan-Newmann algorithm should be chosen over the infomap algorithm.**
+
+# Question 3
+
+## Use the Fifa graph, projecting only the countries (network of countries), and report:
+
+### Use the Girvan-Newman and Leiden algorithm, and present a plot of both results. Which one should be chosen?
+
+```{r}
+#This is the link to the fifa network graph from my GitHub repo:
+# graph that projects only the network of countries
+
+fifa_link = "https://github.com/DACSS690C/networks/raw/refs/heads/main/MyGraphs/country_projected.graphml" 
+```
+
+```{r}
+# get network
+fifa = read_graph(fifa_link, format='graphml')
+
+#making sure to have the name labels
+V(fifa)$name=V(fifa)$id 
+```
+
+```{r}
+# let's draw the network
+set.seed(111) # use this to get same results as me
+
+plot.igraph(fifa)
+```
+
+### Girvan-Newmann algorithm
+
+```{r}
+set.seed(333)
+
+fifa_gn <- cluster_edge_betweenness(fifa, directed = FALSE)
+sizes(fifa_gn)
+```
+
+```{r}
+# plot GM algorithm
+plot(fifa_gn, fifa,
+     layout = layout_with_kk, 
+     main="Girvan-Newman Solution")
+```
+
+Modularity score:
+
+```{r}
+modularity(fifa, membership(fifa_gn), directed = FALSE)
+```
+
+### The Leiden algorithm
+
+```{r}
+# compute the communities using the objective function
+set.seed(123) # set seed
+fifa_ld <- cluster_leiden(fifa,
+                              objective_function ="modularity")
+
+sizes(fifa_ld)
+```
+
+```{r}
+# plot the leiden algorithm
+plot(fifa_ld, fifa,
+     layout = layout_with_kk, # plot with the Kamada-Kawai layout algorithm
+     main="Leiden Solution-using modularity")
+```
+
+Let's see the modularity score:
+
+```{r}
+modularity(fifa, membership(fifa_ld))
+```
+
+### Which one should be chosen?
+
+Girvan-Newmann algorithm = 0.01644719
+Leiden algorithm =  0.04589626
+
+Since the modularity score for the Leiden algorithm is closer to 1 than the score for the Girvan-Newmann algorithm, it is stronger. 
+
+Thus, **the Leiden algorithm should be chosen over the Girvan-Newmann algorithm.**
