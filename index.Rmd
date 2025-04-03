@@ -1,5 +1,5 @@
 ---
-title: "index"
+title: "HW2_B"
 author: "Kai Holl"
 date: "2025-04-03"
 output: html_document
@@ -10,8 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(igraph)
 ```
-
-1.  Use the files you created during the preHomework in a GitHub Repo. Use the Fifa graph, projecting only the countries (netwrom of countries), and report: Use the Girvan-Newman and Leiden algorithm, and present a plot of both results. Which one should be chosen? JUST PREPARE ONE CODE FILE, and publish it as website (as usual) using GitHub. Send the link to the REPOSITORY, and in the README add the link.
 
 # Question 1
 
